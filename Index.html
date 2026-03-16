@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Glucose Tracker">
+<meta name="theme-color" content="#f0f4ff">
+<title>Glucose Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f4ff;
+    --surface: #ffffff;
+    --surface2: #f7f9ff;
+    --border: #e2e8f8;
+    --text: #1a1f36;
+    --text2: #6b7280;
+    --text3: #9ca3af;
+    --blue: #3b5bdb;
+    --blue-light: #e8ecff;
+    --green: #2d9d6e;
+    --green-light: #d6f5ea;
+    --orange: #e07b2b;
+    --orange-light: #fef0e0;
+    --red: #dc3545;
+    --red-light: #ffe0e3;
+    --indigo: #5c6bc0;
+    --indigo-light: #ede7f6;
+    --shadow-sm: 0 1px 4px rgba(59,91,219,0.07);
+    --shadow: 0 4px 16px rgba(59,91,219,0.10);
+    --shadow-lg: 0 8px 32px rgba(59,91,219,0.13);
+    --radius: 18px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+    --nav-h: 70px;
+    --header-h: 60px;
+    --font: 'DM Sans', sans-serif;
+    --font-display: 'DM Serif Display', serif;
+  }
+
+- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+height: 100%; width: 100%;
+font-family: var(–font);
+background: var(–bg);
+color: var(–text);
+overflow: hidden;
+}
+
+/* ── App Shell ── */
+#app { display: flex; flex-direction: column; height: 100dvh; }
+
+/* ── Header ── */
+.header {
+height: var(–header-h);
+background: var(–surface);
+border-bottom: 1px solid var(–border);
+display: flex; align-items: center; justify-content: space-between;
+padding: 0 20px;
+flex-shrink: 0;
+position: relative;
+z-index: 10;
+}
+.header-title { font-family: var(–font-display); font-size: 22px; color: var(–text); }
+.header-date { font-size: 12px; color: var(–text2); font-weight: 500; }
+.header-right { display:flex; gap:10px; align-items:center; }
+
+/* ── Screens ── */
+.screens { flex: 1; overflow: hidden; position: relative; }
+.screen {
+position: absolute; inset: 0;
+overflow-y: auto; overflow-x: hidden;
+-webkit-overflow-scrolling: touch;
+padding: 16px 16px calc(var(–nav-h) + 16px);
+display: none;
+animation: fadeIn 0.2s ease;
+}
+.screen.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ── Bottom Nav ── */
+.nav {
+height: var(–nav-h);
+background: var(–surface);
+border-top: 1px solid var(–border);
+display: grid; grid-template-columns: repeat(5, 1fr);
+flex-shrink: 0;
+padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.nav-btn {
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+gap: 4px; border: none; background: none; cursor: pointer;
+color: var(–text3); font-size: 10px; font-weight: 600;
+font-family: var(–font); transition: color 0.15s;
+padding: 6px 0;
+}
+.nav-btn.active { color: var(–blue); }
+.nav-btn svg { width: 22px; height: 22px; }
+
+/* ── Cards ── */
+.card {
+background: var(–surface);
+border-radius: var(–radius);
+padding: 18px;
+box-shadow: var(–shadow-sm);
+border: 1px solid var(–border);
+margin-bottom: 14px;
+}
+.card-title {
+font-size: 11px; font-weight: 700; color: var(–text3);
+text-transform: uppercase; letter-spacing: 0.08em;
+margin-bottom: 14px;
+}
+
+/* ── Status Badge ── */
+.badge {
+display: inline-flex; align-items: center; gap: 5px;
+padding: 4px 10px; border-radius: 20px;
+font-size: 12px; font-weight: 700;
+}
+.badge-green  { background: var(–green-light);  color: var(–green); }
+.badge-orange { background: var(–orange-light); color: var(–orange); }
+.badge-red    { background: var(–red-light);    color: var(–red); }
+.badge-blue   { background: var(–blue-light);   color: var(–blue); }
+
+/* ── Reading Row ── */
+.reading-row {
+display: flex; align-items: center; gap: 12px;
+padding: 12px 0;
+border-bottom: 1px solid var(–border);
+}
+.reading-row:last-child { border-bottom: none; padding-bottom: 0; }
+.reading-icon {
+width: 42px; height: 42px; border-radius: 12px;
+display: flex; align-items: center; justify-content: center;
+font-size: 18px; flex-shrink: 0;
+}
+.reading-body { flex: 1; min-width: 0; }
+.reading-type { font-weight: 700; font-size: 14px; }
+.reading-meta { font-size: 11px; color: var(–text2); margin-top: 2px; }
+.reading-extras { font-size: 11px; color: var(–text3); margin-top: 3px; }
+.reading-value { text-align: right; flex-shrink: 0; }
+.reading-num { font-size: 20px; font-weight: 700; line-height: 1; }
+.reading-unit { font-size: 10px; color: var(–text2); font-weight: 500; }
+
+/* ── Dashboard Hero ── */
+.hero {
+background: linear-gradient(135deg, #3b5bdb 0%, #5c6bc0 100%);
+border-radius: var(–radius);
+padding: 24px;
+color: white;
+margin-bottom: 14px;
+box-shadow: var(–shadow-lg);
+position: relative;
+overflow: hidden;
+}
+.hero::before {
+content: ‘’;
+position: absolute; top: -30px; right: -30px;
+width: 130px; height: 130px;
+border-radius: 50%;
+background: rgba(255,255,255,0.08);
+}
+.hero::after {
+content: ‘’;
+position: absolute; bottom: -40px; right: 40px;
+width: 90px; height: 90px;
+border-radius: 50%;
+background: rgba(255,255,255,0.05);
+}
+.hero-label { font-size: 11px; font-weight: 600; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.08em; }
+.hero-value { font-size: 60px; font-weight: 700; line-height: 1.05; letter-spacing: -2px; }
+.hero-unit  { font-size: 18px; font-weight: 400; opacity: 0.8; }
+.hero-sub   { font-size: 13px; opacity: 0.75; margin-top: 4px; }
+.hero-badge { margin-top: 12px; }
+.hero-badge .badge { background: rgba(255,255,255,0.2); color: white; }
+.hero-empty { text-align: center; padding: 8px 0; }
+.hero-empty-icon { font-size: 40px; opacity: 0.5; }
+.hero-empty-text { font-size: 15px; opacity: 0.85; margin-top: 8px; font-weight: 600; }
+.hero-empty-sub  { font-size: 12px; opacity: 0.65; margin-top: 4px; }
+
+/* ── Stats Grid ── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat-card {
+background: var(–surface); border-radius: var(–radius-sm);
+padding: 14px; border: 1px solid var(–border);
+box-shadow: var(–shadow-sm);
+}
+.stat-icon  { font-size: 20px; margin-bottom: 6px; }
+.stat-value { font-size: 22px; font-weight: 700; }
+.stat-label { font-size: 11px; color: var(–text2); font-weight: 500; margin-top: 2px; }
+
+/* ── Forms ── */
+.form-group { margin-bottom: 16px; }
+.form-label {
+display: block; font-size: 12px; font-weight: 700;
+color: var(–text2); text-transform: uppercase;
+letter-spacing: 0.07em; margin-bottom: 8px;
+}
+.form-input {
+width: 100%; padding: 13px 16px;
+border: 1.5px solid var(–border);
+border-radius: var(–radius-sm);
+font-family: var(–font); font-size: 15px;
+background: var(–surface2); color: var(–text);
+outline: none; transition: border-color 0.15s;
+-webkit-appearance: none;
+}
+.form-input:focus { border-color: var(–blue); background: white; }
+textarea.form-input { resize: vertical; min-height: 80px; }
+
+.glucose-input-wrap {
+display: flex; align-items: center; gap: 0;
+background: var(–surface2);
+border: 1.5px solid var(–border);
+border-radius: var(–radius-sm);
+overflow: hidden;
+transition: border-color 0.15s;
+}
+.glucose-input-wrap:focus-within { border-color: var(–blue); background: white; }
+.glucose-big {
+flex: 1; padding: 16px 16px;
+border: none; background: transparent;
+font-family: var(–font); font-size: 36px; font-weight: 700;
+color: var(–text); outline: none;
+-webkit-appearance: none;
+}
+.glucose-unit-label {
+padding: 0 16px; font-size: 14px; font-weight: 600;
+color: var(–text2); white-space: nowrap;
+}
+
+/* ── Segment Control ── */
+.seg-wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; background: var(–surface2); border-radius: var(–radius-sm); padding: 3px; border: 1.5px solid var(–border); }
+.seg-btn {
+padding: 10px 4px; border: none; background: transparent;
+border-radius: 9px; font-family: var(–font);
+font-size: 13px; font-weight: 600; color: var(–text2);
+cursor: pointer; transition: all 0.15s;
+display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.seg-btn.active { background: white; color: var(–blue); box-shadow: var(–shadow-sm); }
+.seg-btn .seg-icon { font-size: 16px; }
+
+/* ── Primary Button ── */
+.btn-primary {
+width: 100%; padding: 16px;
+background: var(–blue); color: white;
+border: none; border-radius: var(–radius-sm);
+font-family: var(–font); font-size: 16px; font-weight: 700;
+cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+box-shadow: 0 4px 14px rgba(59,91,219,0.35);
+display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.45; box-shadow: none; }
+.btn-secondary {
+width: 100%; padding: 14px;
+background: var(–surface2); color: var(–blue);
+border: 1.5px solid var(–blue-light); border-radius: var(–radius-sm);
+font-family: var(–font); font-size: 15px; font-weight: 700;
+cursor: pointer; transition: background 0.15s;
+display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+/* ── Toast ── */
+.toast {
+position: fixed; bottom: calc(var(–nav-h) + 16px); left: 50%;
+transform: translateX(-50%) translateY(20px);
+background: var(–text); color: white;
+padding: 12px 22px; border-radius: 24px;
+font-size: 14px; font-weight: 600;
+opacity: 0; transition: all 0.3s; z-index: 100;
+white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── History ── */
+.filter-strip {
+display: flex; gap: 8px; overflow-x: auto;
+padding-bottom: 12px; margin-bottom: 4px;
+-webkit-overflow-scrolling: touch;
+scrollbar-width: none;
+}
+.filter-strip::-webkit-scrollbar { display: none; }
+.filter-chip {
+flex-shrink: 0; padding: 7px 16px;
+border-radius: 20px; border: 1.5px solid var(–border);
+background: var(–surface); font-family: var(–font);
+font-size: 13px; font-weight: 600; color: var(–text2);
+cursor: pointer; transition: all 0.15s;
+}
+.filter-chip.active { background: var(–blue); border-color: var(–blue); color: white; }
+
+.day-group-label {
+font-size: 12px; font-weight: 700; color: var(–text3);
+text-transform: uppercase; letter-spacing: 0.07em;
+margin: 16px 0 8px;
+}
+
+.swipe-row { position: relative; overflow: hidden; border-radius: var(–radius-sm); margin-bottom: 4px; }
+.swipe-delete {
+position: absolute; right: 0; top: 0; bottom: 0;
+width: 70px; background: var(–red);
+display: flex; align-items: center; justify-content: center;
+color: white; font-size: 20px;
+border-radius: 0 var(–radius-sm) var(–radius-sm) 0;
+cursor: pointer;
+}
+.swipe-content { background: var(–surface); border-radius: var(–radius-sm); border: 1px solid var(–border); transition: transform 0.2s; }
+.swipe-content.swiped { transform: translateX(-70px); }
+
+/* ── Chart ── */
+.chart-wrap { width: 100%; position: relative; }
+canvas { width: 100% !important; border-radius: var(–radius-sm); }
+
+/* ── Reports ── */
+.period-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.period-tab {
+flex: 1; padding: 9px; border-radius: var(–radius-xs);
+border: 1.5px solid var(–border); background: var(–surface);
+font-family: var(–font); font-size: 13px; font-weight: 700;
+color: var(–text2); cursor: pointer; text-align: center;
+transition: all 0.15s;
+}
+.period-tab.active { background: var(–blue); border-color: var(–blue); color: white; }
+
+/* ── Settings ── */
+.settings-section { margin-bottom: 24px; }
+.settings-label {
+font-size: 11px; font-weight: 700; color: var(–text3);
+text-transform: uppercase; letter-spacing: 0.09em;
+margin-bottom: 10px; padding-left: 4px;
+}
+.settings-row {
+background: var(–surface); border: 1px solid var(–border);
+border-radius: var(–radius-sm);
+padding: 14px 16px;
+display: flex; align-items: center; gap: 12px;
+margin-bottom: 2px;
+}
+.settings-row:first-of-type { border-radius: var(–radius-sm) var(–radius-sm) 6px 6px; }
+.settings-row:last-of-type  { border-radius: 6px 6px var(–radius-sm) var(–radius-sm); }
+.settings-row:only-child    { border-radius: var(–radius-sm); }
+.settings-icon { font-size: 20px; width: 28px; text-align: center; }
+.settings-body { flex: 1; }
+.settings-row-label { font-size: 14px; font-weight: 600; }
+.settings-row-sub { font-size: 12px; color: var(–text2); margin-top: 1px; }
+.settings-control input[type=“time”] {
+border: 1.5px solid var(–border); border-radius: 8px;
+padding: 6px 10px; font-family: var(–font); font-size: 14px;
+background: var(–surface2); color: var(–text); outline: none;
+-webkit-appearance: none;
+}
+.toggle {
+width: 46px; height: 26px;
+background: var(–border); border-radius: 13px;
+position: relative; cursor: pointer; transition: background 0.2s;
+border: none; flex-shrink: 0;
+}
+.toggle.on { background: var(–blue); }
+.toggle::after {
+content: ‘’; position: absolute;
+width: 20px; height: 20px; background: white;
+border-radius: 50%; top: 3px; left: 3px;
+transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on::after { transform: translateX(20px); }
+
+/* ── Range Legend ── */
+.range-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(–border); }
+.range-row:last-child { border-bottom: none; }
+.range-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.range-name { font-size: 13px; font-weight: 700; width: 80px; }
+.range-val  { font-size: 12px; color: var(–text2); }
+
+/* ── Empty State ── */
+.empty-state { text-align: center; padding: 40px 20px; }
+.empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.empty-state-sub   { font-size: 14px; color: var(–text2); }
+
+/* ── Success Overlay ── */
+.success-overlay {
+position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+display: flex; align-items: center; justify-content: center;
+z-index: 200; opacity: 0; pointer-events: none;
+transition: opacity 0.2s;
+}
+.success-overlay.show { opacity: 1; pointer-events: auto; }
+.success-card {
+background: white; border-radius: var(–radius);
+padding: 32px 28px; text-align: center; margin: 20px;
+transform: scale(0.9); transition: transform 0.2s;
+}
+.success-overlay.show .success-card { transform: scale(1); }
+.success-icon { font-size: 52px; margin-bottom: 12px; }
+.success-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.success-sub   { font-size: 14px; color: var(–text2); margin-bottom: 20px; }
+</style>
+
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="header-title">Glucose Tracker</div>
+      <div class="header-date" id="headerDate"></div>
+    </div>
+    <div class="header-right">
+      <div id="headerBadge"></div>
+    </div>
+  </div>
+
+  <!-- Screens -->
+
+  <div class="screens">
+
+```
+<!-- ── DASHBOARD ── -->
+<div class="screen active" id="screen-dash">
+  <div id="heroCard"></div>
+  <div class="card">
+    <div class="card-title">Today's Readings</div>
+    <div id="todayList"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Target Ranges</div>
+    <div class="range-row"><div class="range-dot" style="background:var(--blue)"></div><div class="range-name">Low</div><div class="range-val">Below 4.0 mmol/L</div></div>
+    <div class="range-row"><div class="range-dot" style="background:var(--green)"></div><div class="range-name">Normal</div><div class="range-val">4.0–7.0 (fasting) / up to 8.5 (meals)</div></div>
+    <div class="range-row"><div class="range-dot" style="background:var(--orange)"></div><div class="range-name">Borderline</div><div class="range-val">7.1–10.0 mmol/L</div></div>
+    <div class="range-row"><div class="range-dot" style="background:var(--red)"></div><div class="range-name">High</div><div class="range-val">Above 10.0 mmol/L</div></div>
+  </div>
+</div>
+
+<!-- ── ADD READING ── -->
+<div class="screen" id="screen-add">
+  <div class="card">
+    <div class="card-title">Glucose Level</div>
+    <div class="form-group">
+      <div class="glucose-input-wrap">
+        <input class="glucose-big" type="number" id="glucoseVal" placeholder="0.0" min="1" max="30" step="0.1" inputmode="decimal">
+        <div class="glucose-unit-label">mmol/L</div>
+      </div>
+      <div id="glucoseBadge" style="margin-top:10px;min-height:28px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Reading Type</div>
+    <div class="seg-wrap" id="typeSelector">
+      <button class="seg-btn active" data-type="Morning"><span class="seg-icon">🌅</span>Morning</button>
+      <button class="seg-btn" data-type="Midday"><span class="seg-icon">☀️</span>Midday</button>
+      <button class="seg-btn" data-type="Bedtime"><span class="seg-icon">🌙</span>Bedtime</button>
+    </div>
+    <div class="form-group" style="margin-top:16px;margin-bottom:0">
+      <label class="form-label">Date & Time</label>
+      <input class="form-input" type="datetime-local" id="readingDate">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Additional Details <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+    <div class="form-group">
+      <label class="form-label">💊 Medication</label>
+      <input class="form-input" type="text" id="medication" placeholder="e.g. Metformin 500mg">
+    </div>
+    <div class="form-group">
+      <label class="form-label">🍽️ Food / Meal</label>
+      <input class="form-input" type="text" id="food" placeholder="e.g. Oatmeal with berries">
+    </div>
+    <div class="form-group">
+      <label class="form-label">🏃 Exercise</label>
+      <input class="form-input" type="text" id="exercise" placeholder="e.g. 30 min walk">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">📝 Notes</label>
+      <textarea class="form-input" id="notes" placeholder="Any additional notes..."></textarea>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="saveBtn" onclick="saveReading()">
+    ✅ Save Reading
+  </button>
+  <div style="height:8px"></div>
+</div>
+
+<!-- ── HISTORY ── -->
+<div class="screen" id="screen-history">
+  <div class="filter-strip" id="filterStrip">
+    <button class="filter-chip active" data-filter="All">All</button>
+    <button class="filter-chip" data-filter="Morning">🌅 Morning</button>
+    <button class="filter-chip" data-filter="Midday">☀️ Midday</button>
+    <button class="filter-chip" data-filter="Bedtime">🌙 Bedtime</button>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<!-- ── REPORTS ── -->
+<div class="screen" id="screen-reports">
+  <div class="period-tabs" id="periodTabs">
+    <button class="period-tab active" data-period="7">7 Days</button>
+    <button class="period-tab" data-period="30">30 Days</button>
+    <button class="period-tab" data-period="0">All Time</button>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="card">
+    <div class="card-title">Glucose Trend</div>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">By Reading Type</div>
+    <div id="typeBreakdown"></div>
+  </div>
+
+  <button class="btn-secondary" onclick="exportCSV()">📤 Export as CSV</button>
+  <div style="height:8px"></div>
+</div>
+
+<!-- ── SETTINGS ── -->
+<div class="screen" id="screen-settings">
+  <div class="settings-section">
+    <div class="settings-label">Reminders</div>
+    <div class="settings-row">
+      <div class="settings-icon">🔔</div>
+      <div class="settings-body">
+        <div class="settings-row-label">Enable Daily Reminders</div>
+        <div class="settings-row-sub">Get notified to log your readings</div>
+      </div>
+      <button class="toggle on" id="reminderToggle" onclick="toggleReminders()"></button>
+    </div>
+    <div id="reminderTimes">
+      <div class="settings-row">
+        <div class="settings-icon">🌅</div>
+        <div class="settings-body">
+          <div class="settings-row-label">Morning</div>
+          <div class="settings-row-sub">First reading of the day</div>
+        </div>
+        <div class="settings-control"><input type="time" id="timeMorning" value="07:00" onchange="saveReminderTimes()"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon">☀️</div>
+        <div class="settings-body">
+          <div class="settings-row-label">Midday</div>
+          <div class="settings-row-sub">Midday check</div>
+        </div>
+        <div class="settings-control"><input type="time" id="timeMidday" value="12:00" onchange="saveReminderTimes()"></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-icon">🌙</div>
+        <div class="settings-body">
+          <div class="settings-row-label">Bedtime</div>
+          <div class="settings-row-sub">Last reading of the day</div>
+        </div>
+        <div class="settings-control"><input type="time" id="timeBedtime" value="22:00" onchange="saveReminderTimes()"></div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:10px 4px;font-size:12px;color:var(--text2);">
+      ℹ️ To receive notifications, save this page and allow notifications when prompted by your browser.
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-label">Target Ranges (mmol/L)</div>
+    <div class="settings-row" style="border-radius:var(--radius-sm)">
+      <div style="flex:1">
+        <div class="range-row"><div class="range-dot" style="background:var(--blue)"></div><div class="range-name">Low</div><div class="range-val">Below 4.0</div></div>
+        <div class="range-row"><div class="range-dot" style="background:var(--green)"></div><div class="range-name">Normal</div><div class="range-val">4.0–7.0 fasting / ≤8.5 meals</div></div>
+        <div class="range-row"><div class="range-dot" style="background:var(--orange)"></div><div class="range-name">Borderline</div><div class="range-val">7.1–10.0</div></div>
+        <div class="range-row"><div class="range-dot" style="background:var(--red)"></div><div class="range-name">High</div><div class="range-val">Above 10.0</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-label">About</div>
+    <div class="settings-row"><div class="settings-icon">📱</div><div class="settings-body"><div class="settings-row-label">App Version</div></div><div style="font-size:13px;color:var(--text2);font-weight:600;">1.0.0</div></div>
+    <div class="settings-row"><div class="settings-icon">📏</div><div class="settings-body"><div class="settings-row-label">Units</div></div><div style="font-size:13px;color:var(--text2);font-weight:600;">mmol/L</div></div>
+    <div class="settings-row"><div class="settings-icon">💾</div><div class="settings-body"><div class="settings-row-label">Storage</div></div><div style="font-size:13px;color:var(--text2);font-weight:600;">This device</div></div>
+    <div class="settings-row"><div class="settings-icon">🗑️</div><div class="settings-body"><div class="settings-row-label">Clear All Data</div><div class="settings-row-sub">Permanently delete all readings</div></div><button onclick="clearAllData()" style="background:var(--red-light);color:var(--red);border:none;border-radius:8px;padding:6px 12px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;">Clear</button></div>
+  </div>
+
+  <div style="height:8px"></div>
+</div>
+```
+
+  </div><!-- /screens -->
+
+  <!-- Bottom Nav -->
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showScreen('dash',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-btn" onclick="showScreen('add',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Add
+    </button>
+    <button class="nav-btn" onclick="showScreen('history',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      History
+    </button>
+    <button class="nav-btn" onclick="showScreen('reports',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Reports
+    </button>
+    <button class="nav-btn" onclick="showScreen('settings',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+</div>
+
+<!-- Toast -->
+
+<div class="toast" id="toast"></div>
+
+<!-- Success Overlay -->
+
+<div class="success-overlay" id="successOverlay" onclick="closeSuccess()">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Reading Saved!</div>
+    <div class="success-sub" id="successSub"></div>
+    <button class="btn-primary" onclick="closeSuccess()">Done</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA LAYER
+// ══════════════════════════════════════════
+const DB_KEY = 'glucoseReadings_v1';
+
+function loadReadings() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveReadings(readings) {
+  localStorage.setItem(DB_KEY, JSON.stringify(readings));
+}
+function addReading(r) {
+  const readings = loadReadings();
+  r.id = Date.now().toString();
+  readings.push(r);
+  saveReadings(readings);
+  return r;
+}
+function deleteReading(id) {
+  saveReadings(loadReadings().filter(r => r.id !== id));
+}
+
+// ══════════════════════════════════════════
+// GLUCOSE STATUS
+// ══════════════════════════════════════════
+function getStatus(value, type) {
+  const upperNormal = type === 'Morning' ? 7.0 : 8.5;
+  if (value < 4.0)          return 'low';
+  if (value <= upperNormal)  return 'normal';
+  if (value <= 10.0)         return 'borderline';
+  return 'high';
+}
+const STATUS_META = {
+  normal:     { label: '✓ Normal',     cls: 'badge-green',  color: 'var(--green)',  dot: '#2d9d6e' },
+  borderline: { label: '⚠ Borderline', cls: 'badge-orange', color: 'var(--orange)', dot: '#e07b2b' },
+  high:       { label: '↑ High',       cls: 'badge-red',    color: 'var(--red)',    dot: '#dc3545' },
+  low:        { label: '↓ Low',        cls: 'badge-blue',   color: 'var(--blue)',   dot: '#3b5bdb' },
+};
+const TYPE_ICON = { Morning: '🌅', Midday: '☀️', Bedtime: '🌙' };
+const TYPE_BG   = { Morning: '#fff5e6', Midday: '#fffbe6', Bedtime: '#eef0ff' };
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'dash')     renderDashboard();
+  if (name === 'history')  renderHistory();
+  if (name === 'reports')  renderReports();
+}
+
+// ══════════════════════════════════════════
+// DATE HELPERS
+// ══════════════════════════════════════════
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+}
+function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+}
+function formatDateTime(iso) {
+  return new Date(iso).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+function isSameDay(iso, date) {
+  const d = new Date(iso);
+  return d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
+}
+
+// ══════════════════════════════════════════
+// HEADER
+// ══════════════════════════════════════════
+function initHeader() {
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function renderDashboard() {
+  const readings = loadReadings();
+  const today = new Date();
+  const todayR = readings.filter(r => isSameDay(r.date, today)).sort((a,b) => new Date(b.date) - new Date(a.date));
+  const latest = readings.slice().sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+
+  // Hero
+  const hero = document.getElementById('heroCard');
+  if (latest) {
+    const s = STATUS_META[getStatus(latest.value, latest.type)];
+    hero.innerHTML = `
+      <div class="hero">
+        <div class="hero-label">Latest Reading</div>
+        <div style="display:flex;align-items:flex-end;gap:8px;margin:4px 0">
+          <div class="hero-value">${latest.value.toFixed(1)}</div>
+          <div class="hero-unit">mmol/L</div>
+        </div>
+        <div class="hero-sub">${TYPE_ICON[latest.type]} ${latest.type} &nbsp;·&nbsp; ${formatDateTime(latest.date)}</div>
+        <div class="hero-badge"><span class="badge">${s.label}</span></div>
+      </div>`;
+  } else {
+    hero.innerHTML = `
+      <div class="hero">
+        <div class="hero-empty">
+          <div class="hero-empty-icon">💧</div>
+          <div class="hero-empty-text">No readings yet</div>
+          <div class="hero-empty-sub">Tap "Add" to log your first reading</div>
+        </div>
+      </div>`;
+  }
+
+  // Today's list
+  const list = document.getElementById('todayList');
+  if (todayR.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:20px 0;color:var(--text2);font-size:14px;">No readings logged today</div>`;
+  } else {
+    list.innerHTML = todayR.map(r => readingRowHTML(r, false)).join('');
+  }
+}
+
+function readingRowHTML(r, showDate) {
+  const s = STATUS_META[getStatus(r.value, r.type)];
+  const extras = [
+    r.medication ? `💊 ${r.medication}` : '',
+    r.food       ? `🍽️ ${r.food}`       : '',
+    r.exercise   ? `🏃 ${r.exercise}`   : '',
+  ].filter(Boolean).join('  ·  ');
+  return `
+    <div class="reading-row">
+      <div class="reading-icon" style="background:${TYPE_BG[r.type]}">${TYPE_ICON[r.type]}</div>
+      <div class="reading-body">
+        <div class="reading-type">${r.type}</div>
+        <div class="reading-meta">${showDate ? formatDateTime(r.date) : formatTime(r.date)} &nbsp;<span class="badge ${s.cls}" style="font-size:10px;padding:2px 7px">${s.label}</span></div>
+        ${extras ? `<div class="reading-extras">${extras}</div>` : ''}
+        ${r.notes ? `<div class="reading-extras">📝 ${r.notes}</div>` : ''}
+      </div>
+      <div class="reading-value" style="color:${s.color}">
+        <div class="reading-num">${r.value.toFixed(1)}</div>
+        <div class="reading-unit">mmol/L</div>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+// ADD READING
+// ══════════════════════════════════════════
+let selectedType = 'Morning';
+
+function initAddForm() {
+  // Default datetime to now
+  const now = new Date();
+  now.setSeconds(0, 0);
+  document.getElementById('readingDate').value = now.toISOString().slice(0, 16);
+
+  // Type selector
+  document.querySelectorAll('#typeSelector .seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#typeSelector .seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedType = btn.dataset.type;
+      updateGlucoseBadge();
+    });
+  });
+
+  // Live badge
+  document.getElementById('glucoseVal').addEventListener('input', updateGlucoseBadge);
+}
+
+function updateGlucoseBadge() {
+  const val = parseFloat(document.getElementById('glucoseVal').value);
+  const badge = document.getElementById('glucoseBadge');
+  if (isNaN(val) || val <= 0) { badge.innerHTML = ''; return; }
+  const s = STATUS_META[getStatus(val, selectedType)];
+  badge.innerHTML = `<span class="badge ${s.cls}">${s.label}</span>`;
+}
+
+function saveReading() {
+  const val = parseFloat(document.getElementById('glucoseVal').value);
+  if (isNaN(val) || val <= 0 || val > 30) { showToast('Please enter a valid glucose level'); return; }
+
+  const dateVal = document.getElementById('readingDate').value;
+  const r = {
+    value:      val,
+    type:       selectedType,
+    date:       dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
+    medication: document.getElementById('medication').value.trim(),
+    food:       document.getElementById('food').value.trim(),
+    exercise:   document.getElementById('exercise').value.trim(),
+    notes:      document.getElementById('notes').value.trim(),
+  };
+
+  addReading(r);
+
+  // Reset
+  document.getElementById('glucoseVal').value = '';
+  document.getElementById('medication').value = '';
+  document.getElementById('food').value = '';
+  document.getElementById('exercise').value = '';
+  document.getElementById('notes').value = '';
+  document.getElementById('glucoseBadge').innerHTML = '';
+  const now = new Date(); now.setSeconds(0,0);
+  document.getElementById('readingDate').value = now.toISOString().slice(0,16);
+  selectedType = 'Morning';
+  document.querySelectorAll('#typeSelector .seg-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+
+  const s = STATUS_META[getStatus(r.value, r.type)];
+  document.getElementById('successSub').textContent = `${r.value.toFixed(1)} mmol/L — ${s.label.replace(/[✓⚠↑↓]\s*/,'')} · ${r.type}`;
+  document.getElementById('successOverlay').classList.add('show');
+}
+
+function closeSuccess() {
+  document.getElementById('successOverlay').classList.remove('show');
+}
+
+// ══════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════
+let historyFilter = 'All';
+
+function initHistory() {
+  document.querySelectorAll('#filterStrip .filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#filterStrip .filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      historyFilter = chip.dataset.filter;
+      renderHistory();
+    });
+  });
+}
+
+function renderHistory() {
+  let readings = loadReadings();
+  if (historyFilter !== 'All') readings = readings.filter(r => r.type === historyFilter);
+  readings.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  const list = document.getElementById('historyList');
+  if (readings.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">No readings found</div><div class="empty-state-sub">Add your first reading using the + tab</div></div>`;
+    return;
+  }
+
+  // Group by day
+  const groups = {};
+  readings.forEach(r => {
+    const key = new Date(r.date).toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(r);
+  });
+
+  list.innerHTML = Object.entries(groups).map(([day, items]) => `
+    <div class="day-group-label">${day}</div>
+    ${items.map(r => `
+      <div class="swipe-row" id="row-${r.id}">
+        <div class="swipe-delete" onclick="confirmDelete('${r.id}')">🗑️</div>
+        <div class="swipe-content" id="content-${r.id}">
+          ${readingRowHTML(r, false)}
+        </div>
+      </div>`).join('')}
+  `).join('');
+
+  // Swipe to delete
+  setupSwipes();
+}
+
+function setupSwipes() {
+  document.querySelectorAll('.swipe-content').forEach(el => {
+    let startX = 0;
+    el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    el.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (dx < -60) el.classList.add('swiped');
+      if (dx > 20)  el.classList.remove('swiped');
+    }, { passive: true });
+  });
+}
+
+function confirmDelete(id) {
+  if (confirm('Delete this reading?')) {
+    deleteReading(id);
+    renderHistory();
+    renderDashboard();
+    showToast('Reading deleted');
+  }
+}
+
+// ══════════════════════════════════════════
+// REPORTS
+// ══════════════════════════════════════════
+let reportPeriod = 7;
+let chartInstance = null;
+
+function initReports() {
+  document.querySelectorAll('#periodTabs .period-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#periodTabs .period-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      reportPeriod = parseInt(tab.dataset.period);
+      renderReports();
+    });
+  });
+}
+
+function getFilteredReadings() {
+  const all = loadReadings().sort((a,b) => new Date(a.date) - new Date(b.date));
+  if (reportPeriod === 0) return all;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - reportPeriod);
+  return all.filter(r => new Date(r.date) >= cutoff);
+}
+
+function renderReports() {
+  const readings = getFilteredReadings();
+
+  // Stats
+  const grid = document.getElementById('statsGrid');
+  if (readings.length === 0) {
+    grid.innerHTML = `<div style="grid-column:span 2;text-align:center;padding:20px;color:var(--text2)">No data for this period</div>`;
+    document.getElementById('typeBreakdown').innerHTML = '';
+    renderChart([]);
+    return;
+  }
+  const avg = readings.reduce((s,r) => s + r.value, 0) / readings.length;
+  const highest = readings.reduce((m,r) => r.value > m.value ? r : m);
+  const lowest  = readings.reduce((m,r) => r.value < m.value ? r : m);
+  const inRange = readings.filter(r => getStatus(r.value, r.type) === 'normal').length;
+  const pct     = Math.round(inRange / readings.length * 100);
+
+  grid.innerHTML = `
+    <div class="stat-card"><div class="stat-icon">💧</div><div class="stat-value">${readings.length}</div><div class="stat-label">Readings</div></div>
+    <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">${avg.toFixed(1)}</div><div class="stat-label">Average mmol/L</div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">${pct}%</div><div class="stat-label">In Range</div></div>
+    <div class="stat-card"><div class="stat-icon">⬆️</div><div class="stat-value" style="color:var(--red)">${highest.value.toFixed(1)}</div><div class="stat-label">Highest</div></div>
+  `;
+
+  // Type breakdown
+  const breakdown = document.getElementById('typeBreakdown');
+  breakdown.innerHTML = ['Morning','Midday','Bedtime'].map(type => {
+    const tr = readings.filter(r => r.type === type);
+    const tavg = tr.length ? (tr.reduce((s,r) => s+r.value,0)/tr.length).toFixed(1) : '–';
+    return `
+      <div class="reading-row">
+        <div class="reading-icon" style="background:${TYPE_BG[type]}">${TYPE_ICON[type]}</div>
+        <div class="reading-body">
+          <div class="reading-type">${type}</div>
+          <div class="reading-meta">${tr.length} readings</div>
+        </div>
+        <div class="reading-value">
+          <div class="reading-num" style="font-size:17px">${tavg}</div>
+          <div class="reading-unit">mmol/L avg</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  renderChart(readings);
+}
+
+function renderChart(readings) {
+  const canvas = document.getElementById('trendChart');
+  const ctx = canvas.getContext('2d');
+
+  // Clear previous
+  if (chartInstance) { chartInstance = null; ctx.clearRect(0,0,canvas.width,canvas.height); }
+
+  if (readings.length < 2) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    canvas.height = 100;
+    ctx.font = '14px DM Sans, sans-serif';
+    ctx.fillStyle = '#9ca3af';
+    ctx.textAlign = 'center';
+    ctx.fillText('Not enough data to draw chart', canvas.width/2, 50);
+    return;
+  }
+
+  const W = canvas.offsetWidth || 340;
+  const H = 180;
+  canvas.width  = W * window.devicePixelRatio;
+  canvas.height = H * window.devicePixelRatio;
+  canvas.style.height = H + 'px';
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const values = readings.map(r => r.value);
+  const minV = Math.max(0, Math.min(...values) - 1);
+  const maxV = Math.max(...values) + 1.5;
+  const pad  = { l:32, r:12, t:16, b:28 };
+  const cW   = W - pad.l - pad.r;
+  const cH   = H - pad.t - pad.b;
+
+  const xScale = i => pad.l + (i / (readings.length - 1)) * cW;
+  const yScale = v => pad.t + (1 - (v - minV) / (maxV - minV)) * cH;
+
+  // Grid lines
+  ctx.strokeStyle = '#e2e8f8';
+  ctx.lineWidth = 1;
+  [4.0, 7.0, 8.5, 10.0].forEach(v => {
+    if (v < minV || v > maxV) return;
+    const y = yScale(v);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+    ctx.fillStyle = '#9ca3af'; ctx.font = '9px DM Sans, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(v.toFixed(1), pad.l - 4, y + 3);
+  });
+
+  // Target band
+  const bandTop = yScale(Math.min(8.5, maxV));
+  const bandBot = yScale(Math.max(4.0, minV));
+  ctx.fillStyle = 'rgba(45,157,110,0.07)';
+  ctx.fillRect(pad.l, bandTop, cW, bandBot - bandTop);
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = '#3b5bdb';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  readings.forEach((r, i) => {
+    i === 0 ? ctx.moveTo(xScale(i), yScale(r.value)) : ctx.lineTo(xScale(i), yScale(r.value));
+  });
+  ctx.stroke();
+
+  // Dots
+  readings.forEach((r, i) => {
+    const s = getStatus(r.value, r.type);
+    const dotColor = { normal:'#2d9d6e', borderline:'#e07b2b', high:'#dc3545', low:'#3b5bdb' }[s];
+    ctx.beginPath();
+    ctx.arc(xScale(i), yScale(r.value), 4, 0, Math.PI * 2);
+    ctx.fillStyle = dotColor;
+    ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // X axis dates (max ~5 labels)
+  ctx.fillStyle = '#9ca3af'; ctx.font = '9px DM Sans, sans-serif'; ctx.textAlign = 'center';
+  const step = Math.ceil(readings.length / 5);
+  readings.forEach((r, i) => {
+    if (i % step !== 0 && i !== readings.length - 1) return;
+    const d = new Date(r.date);
+    const label = (d.getMonth()+1) + '/' + d.getDate();
+    ctx.fillText(label, xScale(i), H - 8);
+  });
+}
+
+// ══════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════
+function exportCSV() {
+  const readings = getFilteredReadings();
+  if (readings.length === 0) { showToast('No data to export'); return; }
+
+  let csv = 'Date,Time,Type,Value (mmol/L),Status,Medication,Food,Exercise,Notes\n';
+  readings.forEach(r => {
+    const d    = new Date(r.date);
+    const date = d.toLocaleDateString('en-GB');
+    const time = d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    const stat = getStatus(r.value, r.type);
+    const label = { normal:'Normal', borderline:'Borderline', high:'High', low:'Low' }[stat];
+    csv += `"${date}","${time}","${r.type}","${r.value.toFixed(1)}","${label}","${r.medication||''}","${r.food||''}","${r.exercise||''}","${r.notes||''}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `glucose-log-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exported! ✅');
+}
+
+// ══════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════
+function loadSettings() {
+  const s = JSON.parse(localStorage.getItem('glucoseSettings') || '{}');
+  document.getElementById('timeMorning').value  = s.morning  || '07:00';
+  document.getElementById('timeMidday').value   = s.midday   || '12:00';
+  document.getElementById('timeBedtime').value  = s.bedtime  || '22:00';
+  const on = s.reminders !== false;
+  document.getElementById('reminderToggle').classList.toggle('on', on);
+  document.getElementById('reminderTimes').style.display = on ? '' : 'none';
+}
+function saveReminderTimes() {
+  const s = JSON.parse(localStorage.getItem('glucoseSettings') || '{}');
+  s.morning = document.getElementById('timeMorning').value;
+  s.midday  = document.getElementById('timeMidday').value;
+  s.bedtime = document.getElementById('timeBedtime').value;
+  localStorage.setItem('glucoseSettings', JSON.stringify(s));
+  showToast('Reminder times saved ✅');
+  scheduleNotifications();
+}
+function toggleReminders() {
+  const btn = document.getElementById('reminderToggle');
+  const on  = !btn.classList.contains('on');
+  btn.classList.toggle('on', on);
+  document.getElementById('reminderTimes').style.display = on ? '' : 'none';
+  const s = JSON.parse(localStorage.getItem('glucoseSettings') || '{}');
+  s.reminders = on;
+  localStorage.setItem('glucoseSettings', JSON.stringify(s));
+  showToast(on ? 'Reminders enabled' : 'Reminders disabled');
+}
+function scheduleNotifications() {
+  if (!('Notification' in window)) return;
+  Notification.requestPermission().then(perm => {
+    if (perm !== 'granted') return;
+    showToast('Notifications enabled ✅');
+  });
+}
+function clearAllData() {
+  if (confirm('This will permanently delete ALL your readings. Are you sure?')) {
+    localStorage.removeItem(DB_KEY);
+    renderDashboard();
+    showToast('All data cleared');
+  }
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════
+// SERVICE WORKER (offline support)
+// ══════════════════════════════════════════
+const SW_SCRIPT = `
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open('glucose-v1').then(c => c.addAll([location.pathname]))
+  );
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(e.request)))
+  );
+});
+`;
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  const blob = new Blob([SW_SCRIPT], { type: 'application/javascript' });
+  const url  = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(() => {});
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initHeader();
+  initAddForm();
+  initHistory();
+  initReports();
+  loadSettings();
+  renderDashboard();
+  registerServiceWorker();
+
+  // Resize chart when reports become visible
+  const obs = new MutationObserver(() => {
+    if (document.getElementById('screen-reports').classList.contains('active')) {
+      renderReports();
+    }
+  });
+  obs.observe(document.getElementById('screen-reports'), { attributes: true, attributeFilter: ['class'] });
+});
+</script>
